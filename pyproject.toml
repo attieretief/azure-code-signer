@@ -1,6 +1,6 @@
 [project]
 name = "azure-code-signer"
-version = "0.1.2"
+version = "0.1.3"
 description = "A command line tool to code sign files using a code signing certificate stored in Azure Key Vault."
 authors = [
     {name = "Attie Retief", email = "attie@attieretief.com"}
