@@ -1,0 +1,5 @@
+azure-identity
+azure-keyvault-certificates
+azure-keyvault-secrets
+cryptography
+setuptools
