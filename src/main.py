@@ -98,6 +98,11 @@ def main():
     )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("--pkcs12-password", help="Password for PKCS#12 if required")
+    parser.add_argument(
+        "--embedded", 
+        action="store_true", 
+        help="Embed signature directly in the file (required for AppSource)"
+    )
 
     args = parser.parse_args()
 
@@ -191,24 +196,45 @@ def main():
         if args.verify:
             # Verify the file signature - keep user-facing messages
             print(f"Verifying signature for: {args.file}")
-            if file_signer.verify_signature(args.file, args.output):
-                print(f"✅ Signature verified for {args.file}")
-                sys.exit(0)
+            if args.embedded:
+                # Verify embedded signature
+                if file_signer.verify_embedded_signature(args.file):
+                    print(f"✅ Embedded signature verified for {args.file}")
+                    sys.exit(0)
+                else:
+                    print(f"❌ Invalid embedded signature for {args.file}")
+                    sys.exit(1)
             else:
-                print(f"❌ Invalid signature for {args.file}")
-                sys.exit(1)
+                # Verify detached signature
+                if file_signer.verify_signature(args.file, args.output):
+                    print(f"✅ Signature verified for {args.file}")
+                    sys.exit(0)
+                else:
+                    print(f"❌ Invalid signature for {args.file}")
+                    sys.exit(1)
         else:
             # Sign the file - keep user-facing messages
-            print(f"Signing file: {args.file}")
-            signature_path = file_signer.sign_file(args.file, args.output)
-
-            if signature_path:
-                print(f"✅ Successfully signed {args.file}")
-                print(f"📄 Signature saved to {signature_path}")
-                sys.exit(0)
+            if args.embedded:
+                print(f"Signing file with embedded signature: {args.file}")
+                signature_path = file_signer.sign_file_embedded(args.file, args.output)
+                if signature_path:
+                    print(f"✅ Successfully signed {args.file} with embedded signature")
+                    print(f"📄 Signed file saved to {signature_path}")
+                    sys.exit(0)
+                else:
+                    print(f"❌ Failed to sign {args.file} with embedded signature")
+                    sys.exit(1)
             else:
-                print(f"❌ Failed to sign {args.file}")
-                sys.exit(1)
+                print(f"Signing file: {args.file}")
+                signature_path = file_signer.sign_file(args.file, args.output)
+
+                if signature_path:
+                    print(f"✅ Successfully signed {args.file}")
+                    print(f"📄 Signature saved to {signature_path}")
+                    sys.exit(0)
+                else:
+                    print(f"❌ Failed to sign {args.file}")
+                    sys.exit(1)
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
